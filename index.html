@@ -1,412 +1,687 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Hellcastle NFL Pick'em Challenge</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>JDC Jr Challenge</title>
+  
+  <!-- Firebase App (core), Database, and Auth -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
 
   <style>
     :root {
-      --navy: #101a35;
-      --blue: #3157d5;
-      --gold: #f5b942;
-      --light: #f5f7fb;
-      --border: #dce2ef;
-      --green: #dff5e6;
-      --red: #ffe1e1;
-    }
-
-    * {
-      box-sizing: border-box;
+      --primary-color: #2b5c8f;
+      --secondary-color: #d9534f;
+      --bg-color: #f4f7f6;
+      --card-bg: #ffffff;
+      --text-color: #333333;
     }
 
     body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-color);
       margin: 0;
-      font-family: Arial, sans-serif;
-      background: var(--light);
-      color: #172033;
+      padding: 15px;
+      display: flex;
+      justify-content: center;
     }
 
-    header {
-      background: var(--navy);
-      color: white;
-      padding: 24px;
-      text-align: center;
-    }
-
-    header h1 {
-      margin: 0 0 6px;
-      font-size: 28px;
-    }
-
-    header p {
-      margin: 0;
-      color: #cbd4f5;
-    }
-
-    main {
-      max-width: 1400px;
-      margin: auto;
-      padding: 24px;
-    }
-
-    section {
-      background: white;
-      border-radius: 14px;
-      padding: 20px;
-      margin-bottom: 24px;
-      box-shadow: 0 4px 18px #17203312;
-    }
-
-    h2 {
-      margin-top: 0;
-      color: var(--navy);
-    }
-
-    .table-wrap {
-      overflow-x: auto;
-    }
-
-    table {
-      border-collapse: collapse;
-      min-width: 760px;
+    .container {
       width: 100%;
+      max-width: 600px;
+      background: var(--card-bg);
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
     }
 
-    th,
-    td {
-      border: 1px solid var(--border);
-      padding: 12px;
+    h1, h2, h3 {
       text-align: center;
-      white-space: nowrap;
+      margin-top: 0;
     }
 
-    th {
-      background: var(--navy);
-      color: white;
-      position: sticky;
-      top: 0;
-      z-index: 1;
-    }
-
-    th:first-child,
-    td:first-child {
-      text-align: left;
-      position: sticky;
-      left: 0;
-      background: white;
-      z-index: 2;
-    }
-
-    th:first-child {
-      background: var(--navy);
-      z-index: 3;
-    }
-
-    .correct {
-      background: var(--green);
-      font-weight: bold;
-    }
-
-    .incorrect {
-      background: var(--red);
-    }
-
-    .admin-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 14px;
+    .form-group {
+      margin-bottom: 15px;
     }
 
     label {
-      font-weight: bold;
       display: block;
-      margin-bottom: 6px;
+      margin-bottom: 5px;
+      font-weight: bold;
     }
 
-    input {
+    input[type="text"], input[type="email"], input[type="password"], select {
       width: 100%;
       padding: 10px;
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      font-size: 15px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      box-sizing: border-box;
+      font-size: 16px;
     }
 
-    button {
-      margin-top: 18px;
-      background: var(--blue);
-      color: white;
-      border: 0;
-      border-radius: 8px;
-      padding: 11px 18px;
+    .btn-primary, .btn-action, .btn-secondary, .btn-auth {
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 6px;
+      font-size: 16px;
       font-weight: bold;
       cursor: pointer;
+      margin-top: 10px;
     }
 
-    button:hover {
-      background: #203fae;
+    .btn-primary { background-color: var(--primary-color); color: white; }
+    .btn-action { background-color: #5cb85c; color: white; }
+    .btn-secondary { background-color: #6c757d; color: white; }
+
+    .hidden { display: none !important; }
+
+    .auth-box {
+      background: #f8f9fa;
+      padding: 15px;
+      border-radius: 8px;
+      border: 1px solid #e9ecef;
+      margin-bottom: 20px;
     }
 
-    .status {
-      margin-top: 12px;
+    .user-profile-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #e3f2fd;
+      padding: 10px 15px;
+      border-radius: 6px;
+      margin-bottom: 15px;
+    }
+
+    /* Player Inputs */
+    .player-row {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    /* Game Layout */
+    .game-header {
+      background: #e9ecef;
+      padding: 10px;
+      border-radius: 6px;
+      text-align: center;
+      margin-bottom: 15px;
+    }
+
+    .dart-slots {
+      display: flex;
+      justify-content: space-around;
+      margin: 15px 0;
+    }
+
+    .dart-slot {
+      width: 30%;
+      padding: 10px;
+      border: 2px dashed #ccc;
+      border-radius: 6px;
+      text-align: center;
+      font-weight: bold;
+      background: #fafafa;
+    }
+
+    .dart-slot.filled {
+      border-style: solid;
+      border-color: var(--primary-color);
+      background: #eef5fc;
+    }
+
+    .input-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      margin-bottom: 15px;
+    }
+
+    .input-grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-bottom: 15px;
+    }
+
+    .btn-dart {
+      padding: 12px 8px;
+      font-size: 14px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      background: #fff;
+      cursor: pointer;
       font-weight: bold;
     }
 
-    .loading {
-      color: #68738b;
+    .btn-dart:active {
+      background: #e2e2e2;
+    }
+
+    .game-controls {
+      display: flex;
+      gap: 10px;
+    }
+
+    .table-responsive {
+      overflow-x: auto;
+      margin-top: 15px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: center;
+    }
+
+    th, td {
+      padding: 8px;
+      border: 1px solid #ddd;
+    }
+
+    th {
+      background-color: #f2f2f2;
+    }
+
+    .room-display {
+      background: #e3f2fd;
+      border: 1px solid #90caf9;
+      color: #0d47a1;
+      padding: 10px;
+      border-radius: 6px;
+      text-align: center;
+      font-weight: bold;
+      font-size: 1.1em;
+      margin-bottom: 15px;
     }
   </style>
 </head>
-
 <body>
-  <header>
-    <h1>Hellcastle NFL Pick'em Challenge</h1>
-    <p>Week 1 • One point per correct pick</p>
-  </header>
 
-  <main>
-    <section>
-      <h2>Pick'em Results</h2>
-      <div id="grid" class="loading">Loading picks...</div>
-    </section>
+<div class="container">
+  <!-- SETUP & AUTH SCREEN -->
+  <div id="setup-screen">
+    <h1>JDC Jr Challenge</h1>
 
-    <section>
-      <h2>Leaderboard</h2>
-      <div id="leaderboard" class="loading">Calculating totals...</div>
-    </section>
+    <!-- ACCOUNT AUTHENTICATION SECTION -->
+    <div id="auth-section" class="auth-box">
+      <h3>Player Account</h3>
+      <div id="auth-logged-out">
+        <div class="form-group">
+          <input type="email" id="auth-email" placeholder="Email">
+        </div>
+        <div class="form-group">
+          <input type="password" id="auth-password" placeholder="Password">
+        </div>
+        <div style="display: flex; gap: 10px;">
+          <button class="btn-primary" id="btn-login" style="margin-top:0;">Log In</button>
+          <button class="btn-secondary" id="btn-signup" style="margin-top:0;">Sign Up</button>
+        </div>
+      </div>
+      <div id="auth-logged-in" class="hidden">
+        <div class="user-profile-bar">
+          <div>Logged in as: <strong id="user-display-email">user@example.com</strong></div>
+          <button class="btn-secondary" id="btn-logout" style="width: auto; padding: 6px 12px; margin: 0;">Log Out</button>
+        </div>
+      </div>
+    </div>
 
-    <section>
-      <h2>Admin Answer Entry</h2>
-      <p>Enter the correct answer for each game. For the final game, enter the total points scored by both teams.</p>
+    <div class="form-group">
+      <label for="room-code">Room Code (Leave blank to generate new)</label>
+      <input type="text" id="room-code" placeholder="e.g. 1234">
+    </div>
 
-      <div id="adminForm" class="admin-grid"></div>
+    <div class="form-group">
+      <label for="board-type">Select Dartboard Type</label>
+      <select id="board-type">
+        <option value="basic">Basic Board (Single Bull = 1pt, Double Bull = 2pt)</option>
+        <option value="quad">QUAD Board (Single Bull = 2pt, Double Bull = 4pt)</option>
+      </select>
+    </div>
 
-      <button onclick="saveAnswers()">Save Answers</button>
-      <div id="adminStatus" class="status"></div>
-    </section>
-  </main>
+    <div class="form-group">
+      <label>Players</label>
+      <div id="player-inputs">
+        <div class="player-row">
+          <input type="text" class="player-name" placeholder="Player 1 Name" value="Player 1">
+        </div>
+        <div class="player-row">
+          <input type="text" class="player-name" placeholder="Player 2 Name" value="Player 2">
+        </div>
+      </div>
+      <button type="button" class="btn-secondary" id="btn-add-player">+ Add Player</button>
+    </div>
 
-  <script>
-    const API_URL =
-      "https://script.google.com/macros/s/AKfycbwuVgr8Ka-v2XZxEwfLUZ6ng7iVaVavuPLN_tSwfZexdzZapasfipQPCNKLgvDaoJtm/exec";
+    <button class="btn-primary" id="btn-start-game">Start / Join Game</button>
+  </div>
 
-    let games = [];
-    let players = [];
-    let picks = {};
-    let answers = {};
+  <!-- GAMEPLAY SCREEN -->
+  <div id="game-screen" class="hidden">
+    <div id="room-banner" class="room-display">Room Code: <span id="display-room-code">----</span></div>
 
-    async function loadData() {
-      try {
-        const response = await fetch(API_URL);
-        const data = await response.json();
+    <div class="game-header">
+      <h2 id="game-title">1. Coloring Book</h2>
+      <p id="game-instructions" style="font-size: 0.9em; color: #555;"></p>
+      <div style="font-size: 1.2em; margin-top: 5px;">
+        <strong id="current-player-name">Player</strong> | Round <span id="current-round">1</span>
+      </div>
+      <div>Turn Total: <strong id="turn-total">0</strong></div>
+    </div>
 
-        parseSpreadsheet(data.rows || data);
-        renderAdminForm();
-        renderGrid();
-        renderLeaderboard();
-      } catch (error) {
-        document.querySelector("#grid").textContent =
-          "Unable to load picks. Check that the Apps Script is deployed for anyone with the link.";
-        console.error(error);
+    <!-- 3 Dart Slots -->
+    <div class="dart-slots">
+      <div class="dart-slot" id="slot-0">-</div>
+      <div class="dart-slot" id="slot-1">-</div>
+      <div class="dart-slot" id="slot-2">-</div>
+    </div>
+
+    <!-- Dynamic Input Controls -->
+    <div id="input-container"></div>
+
+    <div class="game-controls">
+      <button class="btn-secondary" id="btn-undo" style="flex: 1;">Undo Dart</button>
+      <button class="btn-action" id="btn-submit-turn" style="flex: 2; margin-top: 0;">Submit Turn</button>
+    </div>
+
+    <!-- In-game Scoreboard Preview -->
+    <div class="table-responsive">
+      <h3>Current Standings</h3>
+      <table id="mini-scoreboard">
+        <!-- Dynamically Populated -->
+      </table>
+    </div>
+  </div>
+
+  <!-- FINAL RESULTS SCREEN -->
+  <div id="results-screen" class="hidden">
+    <h1>Challenge Complete!</h1>
+    <div class="table-responsive">
+      <table id="final-scoreboard">
+        <!-- Dynamically Populated -->
+      </table>
+    </div>
+    <button class="btn-primary" id="btn-restart" style="margin-top: 20px;">Play Again</button>
+  </div>
+</div>
+
+<script>
+  // Firebase Configuration
+  const firebaseConfig = {
+    apiKey: "AIzaSyDPhfak9SwWu_OjurP_VMjOJXu8j5S4oC8",
+    authDomain: "jdcjr-59452.firebaseapp.com",
+    databaseURL: "https://jdcjr-59452-default-rtdb.firebaseio.com",
+    projectId: "jdcjr-59452",
+    storageBucket: "jdcjr-59452.firebasestorage.app",
+    messagingSenderId: "68227040052",
+    appId: "1:68227040052:web:1de4b944cf19b2616c9b61",
+    measurementId: "G-3LHY312Z5E"
+  };
+
+  // Initialize Firebase
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+  const auth = firebase.auth();
+
+  let currentUser = null;
+  let currentRoomId = null;
+
+  // Track Authentication State
+  auth.onAuthStateChanged((user) => {
+    currentUser = user;
+    if (user) {
+      document.getElementById('auth-logged-out').classList.add('hidden');
+      document.getElementById('auth-logged-in').classList.remove('hidden');
+      document.getElementById('user-display-email').innerText = user.email;
+    } else {
+      document.getElementById('auth-logged-out').classList.remove('hidden');
+      document.getElementById('auth-logged-in').classList.add('hidden');
+    }
+  });
+
+  // Auth Button Handlers
+  document.getElementById('btn-login').addEventListener('click', () => {
+    const email = document.getElementById('auth-email').value;
+    const password = document.getElementById('auth-password').value;
+    auth.signInWithEmailAndPassword(email, password).catch(err => alert(err.message));
+  });
+
+  document.getElementById('btn-signup').addEventListener('click', () => {
+    const email = document.getElementById('auth-email').value;
+    const password = document.getElementById('auth-password').value;
+    auth.createUserWithEmailAndPassword(email, password).catch(err => alert(err.message));
+  });
+
+  document.getElementById('btn-logout').addEventListener('click', () => {
+    auth.signOut();
+  });
+
+  // State Management
+  let STATE = {
+    boardType: 'basic',
+    players: [], 
+    currentGameIndex: 0,
+    currentPlayerIndex: 0,
+    currentRound: 1,
+    currentTurnDarts: [],
+    activeModifier: 1,
+    coloringPlayerState: [],
+    racePlayerTotals: []
+  };
+
+  const GAMES = [
+    { name: "1. Coloring Book", maxRounds: 3, instructions: "Hit 3 different colors to TRIPLE your turn points, or hit 3 Red/Green to DOUBLE!" },
+    { name: "2. A Bit of Bully", maxRounds: 3, instructions: "Hit target areas to earn points toward your Bully score!" },
+    { name: "3. Race to 180", maxRounds: null, instructions: "Score points with active multipliers to reach exactly 180 points!" }
+  ];
+
+  // DOM Elements
+  const setupScreen = document.getElementById('setup-screen');
+  const gameScreen = document.getElementById('game-screen');
+  const resultsScreen = document.getElementById('results-screen');
+  const playerInputs = document.getElementById('player-inputs');
+  const inputContainer = document.getElementById('input-container');
+
+  function generateRoomCode() {
+    return Math.floor(1000 + Math.random() * 9000).toString();
+  }
+
+  function handleRoomSetup() {
+    const roomInput = document.getElementById('room-code');
+    let roomCode = roomInput.value.trim();
+
+    if (!roomCode) {
+      roomCode = generateRoomCode();
+      roomInput.value = roomCode;
+    }
+
+    currentRoomId = roomCode;
+    document.getElementById('display-room-code').innerText = currentRoomId;
+
+    const roomRef = db.ref('games/' + currentRoomId);
+
+    roomRef.once('value', (snapshot) => {
+      if (!snapshot.exists()) {
+        STATE.boardType = document.getElementById('board-type').value;
+        const nameInputs = document.querySelectorAll('.player-name');
+        STATE.players = [];
+        STATE.coloringPlayerState = [];
+        STATE.racePlayerTotals = [];
+
+        nameInputs.forEach((input, index) => {
+          const name = input.value.trim() || `Player ${index + 1}`;
+          STATE.players.push({
+            name: name,
+            scores: { coloring: 0, bully: 0, raceDarts: 0, racePoints: 0 }
+          });
+          STATE.coloringPlayerState.push([]);
+          STATE.racePlayerTotals.push(0);
+        });
+
+        roomRef.set(STATE);
       }
-    }
 
-    function parseSpreadsheet(rows) {
-      if (!rows || rows.length < 2) return;
+      listenToRoomUpdates(currentRoomId);
+    });
+  }
 
-      const headers = rows[0].map(value => String(value).trim());
-
-      // Expected format:
-      // Game | Player 1 | Player 2 | Player 3 ...
-      players = headers.slice(1).filter(Boolean);
-
-      games = rows.slice(1)
-        .filter(row => row[0])
-        .map((row, index) => ({
-          id: `game-${index}`,
-          name: String(row[0]),
-          values: row.slice(1).map(value => String(value ?? "").trim())
-        }));
-
-      players.forEach((player, playerIndex) => {
-        picks[player] = {};
-
-        games.forEach(game => {
-          picks[player][game.id] = game.values[playerIndex] || "";
-        });
-      });
-    }
-
-    function renderAdminForm() {
-      const form = document.querySelector("#adminForm");
-
-      form.innerHTML = games.map((game, index) => `
-        <div>
-          <label for="${game.id}">
-            ${index + 1}. ${escapeHtml(game.name)}
-          </label>
-          <input
-            id="${game.id}"
-            data-game-id="${game.id}"
-            placeholder="${index === games.length - 1
-              ? "Total points"
-              : "Correct answer"}"
-            value="${escapeHtml(answers[game.id] || "")}"
-          />
-        </div>
-      `).join("");
-    }
-
-    function renderGrid() {
-      const container = document.querySelector("#grid");
-
-      const header = `
-        <tr>
-          <th>Game / Question</th>
-          ${players.map(player => `<th>${escapeHtml(player)}</th>`).join("")}
-        </tr>
-      `;
-
-      const body = games.map(game => `
-        <tr>
-          <td>${escapeHtml(game.name)}</td>
-          ${players.map(player => {
-            const answer = picks[player][game.id] || "";
-            const correct = answers[game.id] &&
-              normalize(answer) === normalize(answers[game.id]);
-
-            return `
-              <td class="${answers[game.id]
-                ? correct ? "correct" : "incorrect"
-                : ""}">
-                ${escapeHtml(answer)}
-              </td>
-            `;
-          }).join("")}
-        </tr>
-      `).join("");
-
-      container.innerHTML = `
-        <div class="table-wrap">
-          <table>
-            <thead>${header}</thead>
-            <tbody>${body}</tbody>
-          </table>
-        </div>
-      `;
-    }
-
-    function renderLeaderboard() {
-      const results = players.map(player => {
-        let total = 0;
-        let tieBreakerDifference = Number.MAX_SAFE_INTEGER;
-
-        games.forEach((game, index) => {
-          const playerAnswer = normalize(picks[player][game.id]);
-          const correctAnswer = normalize(answers[game.id]);
-
-          if (correctAnswer && playerAnswer === correctAnswer) {
-            total++;
-          }
-
-          if (index === games.length - 1 && answers[game.id]) {
-            const estimate = Number(picks[player][game.id]);
-            const actual = Number(answers[game.id]);
-
-            if (!Number.isNaN(estimate) && !Number.isNaN(actual)) {
-              tieBreakerDifference = Math.abs(estimate - actual);
-            }
-          }
-        });
-
-        return {
-          player,
-          total,
-          tieBreakerDifference
+  function listenToRoomUpdates(roomId) {
+    db.ref('games/' + roomId).on('value', (snapshot) => {
+      const data = snapshot.val();
+      if (data) {
+        STATE = {
+          ...data,
+          currentTurnDarts: data.currentTurnDarts || []
         };
+
+        if (!setupScreen.classList.contains('hidden')) {
+          setupScreen.classList.add('hidden');
+          gameScreen.classList.remove('hidden');
+        }
+
+        updateUI();
+        renderControls();
+      }
+    });
+  }
+
+  function syncStateToFirebase() {
+    if (currentRoomId) {
+      db.ref('games/' + currentRoomId).set(STATE);
+    }
+  }
+
+  // Save history to logged in user's profile
+  function savePlayerMatchHistory() {
+    if (!currentUser) return;
+
+    const matchRecord = {
+      timestamp: Date.now(),
+      boardType: STATE.boardType,
+      players: STATE.players
+    };
+
+    // Push completed match record to Realtime Database user history
+    db.ref('users/' + currentUser.uid + '/history').push(matchRecord);
+  }
+
+  document.getElementById('btn-add-player').addEventListener('click', () => {
+    const count = playerInputs.children.length + 1;
+    const div = document.createElement('div');
+    div.className = 'player-row';
+    div.innerHTML = `<input type="text" class="player-name" placeholder="Player ${count} Name" value="Player ${count}">`;
+    playerInputs.appendChild(div);
+  });
+
+  document.getElementById('btn-start-game').addEventListener('click', handleRoomSetup);
+
+  document.getElementById('btn-undo').addEventListener('click', () => {
+    if (STATE.currentTurnDarts.length > 0) {
+      STATE.currentTurnDarts.pop();
+      syncStateToFirebase();
+    }
+  });
+
+  document.getElementById('btn-submit-turn').addEventListener('click', () => {
+    submitTurn();
+  });
+
+  document.getElementById('btn-restart').addEventListener('click', () => {
+    location.reload();
+  });
+
+  function renderControls() {
+    inputContainer.innerHTML = '';
+    const grid = document.createElement('div');
+
+    if (STATE.currentGameIndex === 0) {
+      grid.className = 'input-grid';
+      const options = [
+        { label: 'Miss (0pt)', val: 0, color: 'miss' },
+        { label: 'Black (1pt)', val: 1, color: 'black' },
+        { label: 'White (1pt)', val: 1, color: 'white' },
+        { label: 'Green (2pt)', val: 2, color: 'green' },
+        { label: 'Red (2pt)', val: 2, color: 'red' }
+      ];
+      options.forEach(opt => {
+        const btn = document.createElement('button');
+        btn.className = 'btn-dart';
+        btn.innerText = opt.label;
+        btn.onclick = () => addDart(opt.val, opt.label, opt.color);
+        grid.appendChild(btn);
       });
+    } else if (STATE.currentGameIndex === 1) {
+      grid.className = 'input-grid-3';
+      let options = [];
 
-      results.sort((a, b) =>
-        b.total - a.total ||
-        a.tieBreakerDifference - b.tieBreakerDifference
-      );
+      if (STATE.boardType === 'quad') {
+        options = [
+          { label: 'Miss (0pt)', val: 0 },
+          { label: 'Double (1pt)', val: 1 },
+          { label: 'Outer (2pt)', val: 2 },
+          { label: 'Triple (3pt)', val: 3 },
+          { label: 'Middle (4pt)', val: 4 },
+          { label: 'Quad (5pt)', val: 5 },
+          { label: 'Inner (6pt)', val: 6 },
+          { label: 'Bull (10pt)', val: 10 },
+          { label: 'DBull (15pt)', val: 15 }
+        ];
+      } else {
+        options = [
+          { label: 'Miss (0pt)', val: 0 },
+          { label: 'Double (1pt)', val: 1 },
+          { label: 'Outer (2pt)', val: 2 },
+          { label: 'Triple (3pt)', val: 3 },
+          { label: 'Inner (4pt)', val: 4 },
+          { label: 'Bull (6pt)', val: 6 },
+          { label: 'DBull (10pt)', val: 10 }
+        ];
+      }
 
-      document.querySelector("#leaderboard").innerHTML = `
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Rank</th>
-                <th>Player</th>
-                <th>Correct Picks</th>
-                <th>Tie-Breaker Difference</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${results.map((result, index) => `
-                <tr>
-                  <td>${index + 1}</td>
-                  <td>${escapeHtml(result.player)}</td>
-                  <td>${result.total}</td>
-                  <td>
-                    ${result.tieBreakerDifference === Number.MAX_SAFE_INTEGER
-                      ? "—"
-                      : result.tieBreakerDifference}
-                  </td>
-                </tr>
-              `).join("")}
-            </tbody>
-          </table>
-        </div>
-      `;
+      options.forEach(opt => {
+        const btn = document.createElement('button');
+        btn.className = 'btn-dart';
+        btn.innerText = opt.label;
+        btn.onclick = () => addDart(opt.val, opt.label);
+        grid.appendChild(btn);
+      });
+    } else if (STATE.currentGameIndex === 2) {
+      grid.className = 'input-grid';
+      const options = [
+        { label: 'Miss (0pt)', val: 0 },
+        { label: 'Single (1pt)', val: 1 },
+        { label: 'Double (2pt)', val: 2 },
+        { label: 'Triple (3pt)', val: 3 }
+      ];
+      options.forEach(opt => {
+        const btn = document.createElement('button');
+        btn.className = 'btn-dart';
+        btn.innerText = opt.label;
+        btn.onclick = () => addDart(opt.val * STATE.activeModifier, `${opt.label} (x${STATE.activeModifier})`);
+        grid.appendChild(btn);
+      });
+    }
+    inputContainer.appendChild(grid);
+  }
+
+  function addDart(val, text, color = null) {
+    if (STATE.currentTurnDarts.length >= 3) return;
+    STATE.currentTurnDarts.push({ value: val, text: text, color: color });
+    syncStateToFirebase();
+  }
+
+  function calculateTurnTotal() {
+    let total = STATE.currentTurnDarts.reduce((acc, d) => acc + d.value, 0);
+    if (STATE.currentGameIndex === 0 && STATE.currentTurnDarts.length === 3) {
+      const colors = STATE.currentTurnDarts.map(d => d.color).filter(c => c && c !== 'miss');
+      const uniqueColors = new Set(colors);
+      if (uniqueColors.size === 3) {
+        total *= 3;
+      } else if (colors.length === 3 && colors.every(c => c === 'red' || c === 'green')) {
+        total *= 2;
+      }
+    }
+    return total;
+  }
+
+  function submitTurn() {
+    const turnScore = calculateTurnTotal();
+    const pIndex = STATE.currentPlayerIndex;
+
+    if (STATE.currentGameIndex === 0) {
+      STATE.players[pIndex].scores.coloring += turnScore;
+    } else if (STATE.currentGameIndex === 1) {
+      STATE.players[pIndex].scores.bully += turnScore;
+    } else if (STATE.currentGameIndex === 2) {
+      STATE.players[pIndex].scores.raceDarts += STATE.currentTurnDarts.length;
+      STATE.racePlayerTotals[pIndex] += turnScore;
+      STATE.players[pIndex].scores.racePoints = STATE.racePlayerTotals[pIndex];
     }
 
-    async function saveAnswers() {
-      const fields = document.querySelectorAll("[data-game-id]");
+    STATE.currentTurnDarts = [];
+    STATE.currentPlayerIndex++;
 
-      const newAnswers = {};
-      fields.forEach(field => {
-        newAnswers[field.dataset.gameId] = field.value.trim();
-      });
+    if (STATE.currentPlayerIndex >= STATE.players.length) {
+      STATE.currentPlayerIndex = 0;
+      STATE.currentRound++;
 
-      try {
-        const response = await fetch(API_URL, {
-          method: "POST",
-          body: JSON.stringify({
-            week: "Week1",
-            answers: newAnswers
-          })
-        });
-
-        if (!response.ok) throw new Error("Save failed");
-
-        answers = newAnswers;
-        renderGrid();
-        renderLeaderboard();
-
-        document.querySelector("#adminStatus").textContent =
-          "Answers saved successfully.";
-      } catch (error) {
-        document.querySelector("#adminStatus").textContent =
-          "Unable to save answers. Check the Apps Script doPost function and deployment permissions.";
-        console.error(error);
+      const game = GAMES[STATE.currentGameIndex];
+      if (game.maxRounds && STATE.currentRound > game.maxRounds) {
+        STATE.currentGameIndex++;
+        STATE.currentRound = 1;
+        
+        if (STATE.currentGameIndex >= GAMES.length) {
+          gameScreen.classList.add('hidden');
+          resultsScreen.classList.remove('hidden');
+          renderFinalScoreboard();
+          savePlayerMatchHistory(); // Save match history on match finish
+          syncStateToFirebase();
+          return;
+        }
       }
     }
 
-    function normalize(value) {
-      return String(value || "").trim().toLowerCase();
+    updateUI();
+    renderControls();
+    syncStateToFirebase();
+  }
+
+  function updateUI() {
+    const game = GAMES[STATE.currentGameIndex];
+    document.getElementById('game-title').innerText = game.name;
+    document.getElementById('game-instructions').innerText = game.instructions;
+    document.getElementById('current-player-name').innerText = STATE.players[STATE.currentPlayerIndex]?.name || 'Player';
+    document.getElementById('current-round').innerText = STATE.currentRound;
+    document.getElementById('turn-total').innerText = calculateTurnTotal();
+
+    for (let i = 0; i < 3; i++) {
+      const slot = document.getElementById(`slot-${i}`);
+      if (STATE.currentTurnDarts && STATE.currentTurnDarts[i]) {
+        slot.innerText = STATE.currentTurnDarts[i].text;
+        slot.classList.add('filled');
+      } else {
+        slot.innerText = '-';
+        slot.classList.remove('filled');
+      }
     }
 
-    function escapeHtml(value) {
-      return String(value || "")
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
-        .replaceAll('"', "&quot;")
-        .replaceAll("'", "&#039;");
-    }
+    renderMiniScoreboard();
+  }
 
-    loadData();
-  </script>
+  function renderMiniScoreboard() {
+    const table = document.getElementById('mini-scoreboard');
+    let html = `<tr><th>Player</th><th>Coloring Book</th><th>Bully</th><th>Race to 180 Total</th></tr>`;
+    STATE.players.forEach(p => {
+      html += `<tr>
+        <td><strong>${p.name}</strong></td>
+        <td>${p.scores.coloring}</td>
+        <td>${p.scores.bully}</td>
+        <td>${p.scores.racePoints}</td>
+      </tr>`;
+    });
+    table.innerHTML = html;
+  }
+
+  function renderFinalScoreboard() {
+    const table = document.getElementById('final-scoreboard');
+    let html = `<tr><th>Rank</th><th>Player</th><th>Coloring</th><th>Bully</th><th>Race Score</th></tr>`;
+    const sorted = [...STATE.players].sort((a,b) => (b.scores.coloring + b.scores.bully + b.scores.racePoints) - (a.scores.coloring + a.scores.bully + a.scores.racePoints));
+    sorted.forEach((p, idx) => {
+      html += `<tr>
+        <td>#${idx + 1}</td>
+        <td><strong>${p.name}</strong></td>
+        <td>${p.scores.coloring}</td>
+        <td>${p.scores.bully}</td>
+        <td>${p.scores.racePoints}</td>
+      </tr>`;
+    });
+    table.innerHTML = html;
+  }
+</script>
+
 </body>
 </html>
